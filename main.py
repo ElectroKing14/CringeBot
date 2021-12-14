@@ -292,6 +292,4 @@ def give_level(user, amount):
     level[user] += amount
 
 
-with open("client secret.txt", "r") as f:
-    secret = f.readline()
-client.run(secret)
+client.run(os.environ['token'])
