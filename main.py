@@ -1,6 +1,5 @@
 import os
 from random import randrange
-
 import discord
 from discord import Guild
 
@@ -26,44 +25,73 @@ async def on_message(message):
     if is_verified(message.author):
         c = get_c_by_author(message.author)
         await increase_exp(c)
-        if message.content[0] == "!":
-            if message.content.startswith("!balance") or message.content.startswith("!bal"):
+        if message.content[0] == "c!":
+            if message.content.startswith("c!bal"):
                 await send(title="Your balance: ", color=green, description=cash[c])
-            elif message.content.startswith("!level"):
+            elif message.content.startswith("c!level"):
                 await show_level(c)
-            elif message.content.startswith("!owner"):
+            elif message.content.startswith("c!owner"):
                 await send(title="Cringegod#2404 is my owner", color=green)
-            elif message.content.startswith("!bust"):
-                await bust_user(message.author, message.content.split(" ")[1])
-            elif message.content.startswith("!unbust"):
-                await unbust_user(message.author, message.content.split(" ")[1])
-            elif message.content.startswith("!send"):
-                send_cash(c, await get_c_by_username(message.content.split(" ")[1]), int(message.content.split(" ")[2]))
-            elif message.content.startswith("!bet"):
-                await bet(c, int(message.content.split(" ")[1]))
-            elif message.content.startswith("!leaderboard"):
+            elif message.content.startswith("c!bust"):
+                try:
+                    await bust_user(message.author, message.content.split(" ")[1])
+                except IndexError:
+                    await send(title="Incorrect syntax", description="bust [username]", color=red)
+            elif message.content.startswith("c!unbust"):
+                try:
+                    await unbust_user(message.author, message.content.split(" ")[1])
+                except IndexError:
+                    await send(title="Incorrect syntax", description="unbust [username]", color=red)
+            elif message.content.startswith("c!send"):
+                try:
+                    send_cash(c, await get_c_by_username(message.content.split(" ")[1]), int(message.content.split(" ")[2]))
+                except IndexError:
+                    await send(title="Incorrect syntax", description="send [username] [amount]", color=red)
+            elif message.content.startswith("c!bet"):
+                try:
+                    await bet(c, int(message.content.split(" ")[1]))
+                except IndexError:
+                    await send(title="Incorrect syntax", description="bet [amount]", color=red)
+            elif message.content.startswith("c!leaderboard"):
                 await leaderboard()
-            elif message.content.startswith("!boosts"):
-                await send(title="Your boosts", description=f"cashboost: x{cash_boost[c] * 2}\nxpboost: x{exp_boost[c] * 2}", color=green)
-            elif message.content.startswith("!reboot"):
-                await send(title="Shutting down...", color=green)
-                os.execv(r"C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.496.0_x64__qbz5n2kfra8p0\python3.10.exe", ["python"] + [r"C:\Users\maxig\PycharmProjects\pythonProject\main.py"])
-            elif message.content.startswith("!shop"):
+            elif message.content.startswith("c!boosts"):
+                await send(title="Your boosts",
+                           description=f"cashboost: x{cash_boost[c] * 2}\nxpboost: x{exp_boost[c] * 2}", color=green)
+            elif message.content.startswith("c!shop"):
                 await shop()
-            elif message.content.startswith("!buy"):
-                await buy(c, message.content.split(" ")[1])
-            elif message.content.startswith("!debug"):
+            elif message.content.startswith("c!buy"):
+                try:
+                    if len(message.content.split(" ")) == 2:
+                        await buy(c, message.content.split(" ")[1])
+                    else:
+                        await buy(c, message.content.split(" ")[1], int(message.content.split(" ")[2]))
+                except IndexError:
+                    await send(title="Incorrect syntax", description="buy [product] ([amount])", color=red)
+            elif message.content.startswith("c!rob"):
+                try:
+                    await rob(c, await get_c_by_username(message.content.split(" ")[1]))
+                except IndexError:
+                    await send(title="Incorrect syntax", description="rob [username]", color=red)
+            elif message.content.startswith("c!debug"):
                 if is_owner(message.author):
                     if message.content.split(" ")[1] == "cash":
-                        give_cash(await get_c_by_username(message.content.split(" ")[2]), int(message.content.split(" ")[3]))
+                        try:
+                            give_cash(await get_c_by_username(message.content.split(" ")[2]),
+                                      int(message.content.split(" ")[3]))
+                        except IndexError:
+                            await send(title="Incorrect syntax", description="debug cash [username] [amount]", color=red)
                     elif message.content.split(" ")[1] == "level":
-                        give_level(await get_c_by_username(message.content.split(" ")[2]), int(message.content.split(" ")[3]))
+                        try:
+                            give_level(await get_c_by_username(message.content.split(" ")[2]),
+                                       int(message.content.split(" ")[3]))
+                        except IndexError:
+                            await send(title="Incorrect syntax", description="debug level [username] [amount]", color=red)
                     elif message.content.split(" ")[1] == "shutdown":
                         await client.close()
                 else:
                     await send(title=f"Unfortunately you don't have the required permissions {no}", color=red)
             save_to_txt()
-    elif message.content.startswith("!verify"):
+    elif message.content.startswith("c!verify"):
         c = get_c_by_author(message.author)
         if c == len(ids):
             ids.append(message.author.id)
@@ -79,8 +107,8 @@ async def on_message(message):
         else:
             await send(title=f"You are already verified {yes}", color=red)
     else:
-        if message.author.id != 915564829320814592 and message.content[0] == "!":
-            await send(title="You aren't verified", color=red, description="Verify yourself with !verify")
+        if message.author.id != 915564829320814592 and message.content[0] == "c!":
+            await send(title="You aren't verified", color=red, description="Verify yourself with c!verify")
 
 
 @client.event
@@ -88,7 +116,7 @@ async def on_ready():
     await send(title="I'm now online!", color=green)
     with open("status.txt") as f1:
         for line in f1:
-            (id1, cash1, level1, exp1, exp_boost1, cash_boost1, guard1, pistol1) = line.split(" ")
+            (id1, cash1, level1, exp1, exp_boost1, cash_boost1, guard1, pistol1, daily1) = line.split(" ")
             ids.append(int(id1))
             cash.append(int(cash1))
             level.append(int(level1))
@@ -207,35 +235,53 @@ async def shop():
     await send(embed=embed)
 
 
-async def buy(c, product):
+async def buy(c, product, amount=1):
     if product.casefold() == "xpboost":
-        if cash[c] - 1000 >= 0:
-            exp_boost[c] += 1
-            cash[c] -= 1000
-            await send(f"Bought 1 {product}", "", green)
+        if cash[c] - 1000 * amount >= 0:
+            exp_boost[c] += amount
+            cash[c] -= 1000 * amount
+            await send(f"Bought {amount} {product}", "", green)
         else:
             await send(f"Not enough money {no}", "", red)
     elif product.casefold() == "cashboost":
-        if cash[c] - 1000 >= 0:
-            cash_boost[c] += 1
-            cash[c] -= 1000
-            await send(f"Bought 1 {product}", "", green)
+        if cash[c] - 1000 * amount >= 0:
+            cash_boost[c] += amount
+            cash[c] -= 1000 * amount
+            await send(f"Bought {amount} {product}", "", green)
         else:
             await send(f"Not enough money {no}", "", red)
     elif product.casefold() == "guard":
-        if cash[c] - 10000 >= 0:
-            guard[c] += 1
-            cash[c] -= 10000
-            await send(f"Bought 1 {product}", "", green)
+        if cash[c] - 10000 * amount >= 0:
+            guard[c] += amount
+            cash[c] -= 10000 * amount
+            await send(f"Bought {amount} {product}", "", green)
         else:
             await send(f"Not enough money {no}", "", red)
     elif product.casefold() == "pistol":
-        if cash[c] - 8000 >= 0:
-            pistol[c] += 1
-            cash[c] -= 8000
-            await send(f"Bought 1 {product}", "", green)
+        if cash[c] - 8000 * amount >= 0:
+            pistol[c] += 1 * amount
+            cash[c] -= 8000 * amount
+            await send(f"Bought {amount} {product}", "", green)
         else:
             await send(f"Not enough money {no}", "", red)
+    else:
+        await send(title="Product Not Found", description="Possible products are: xpboost, cashboost, guard and pistol", color=red)
+
+
+async def rob(author, user):
+    random_num = randrange(1, 100)
+    random_num -= guard[user]
+    random_num += pistol[author]
+    if random_num <= 50:
+        lost_cash = (cash[author] * 0.1).__round__()
+        cash[author] -= lost_cash
+        cash[user] += lost_cash
+        await send(title=f"Robbing failed. It cost you {lost_cash}$", color=red)
+    else:
+        won_cash = (cash[user] * 0.1).__round__()
+        cash[author] += won_cash
+        cash[user] -= won_cash
+        await send(title=f"Robbing succeeded. You robbed {won_cash}$", color=green)
 
 
 def get_c_by_author(author):
@@ -255,7 +301,8 @@ async def get_c_by_username(username):
 
 async def send(title="", description="", color=None, embed=None):
     if embed is None:
-        await client.get_channel(891248820451676243).send(embed=discord.Embed(title=title, description=description, color=color))
+        await client.get_channel(891248820451676243).send(
+            embed=discord.Embed(title=title, description=description, color=color))
     else:
         await client.get_channel(891248820451676243).send(embed=embed)
 
