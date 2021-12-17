@@ -1,2 +1,1 @@
-Dies ist mein Discord Bot.
-Er ist an Dank Memer angelehnt.
+This is my Discord Bot.
